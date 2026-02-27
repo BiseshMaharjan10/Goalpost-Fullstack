@@ -115,8 +115,9 @@ const loginUser = async(req,res) =>{
 const getallUser = async (req,res) =>{
     try {  
         const user = await RegisterUser.findAll({  
-            attributes: {exclude:["password"]}
-        })
+            where: { role: "user" },
+            attributes: { exclude: ["password"] }
+        });
         res.json({
             success: true,
             user,

@@ -15,6 +15,7 @@ app.use("/uploads", express.static("uploads"));
 //userRoutes and productRoutes
 app.use("/api/user", require('./routes/userRoute'));
 app.use("/api/booking", require('./routes/bookingRoute'));
+app.use("/api/settings", require('./routes/settingsRoute'));
 
 app.get("/",(req,res) =>{
     res.json({message: "Welcome to the Home Page"});

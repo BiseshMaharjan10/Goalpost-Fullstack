@@ -10,7 +10,7 @@ const isAdmin = require('../helpers/isAdmin');
 
 router.post('/registerUser',upload.none(),registerUser);
 router.get("/verify-email",verifyEmail);
-router.get("/getAllUser",getallUser);
+router.get("/getAllUser",authGuard,isAdmin,getallUser);
 router.post("/loginUser",loginUser);
 router.put("/updateImage",authGuard,uploadProductImages,updateImage);
 router.get("/getme",authGuard,getMe);
