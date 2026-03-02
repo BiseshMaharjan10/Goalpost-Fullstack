@@ -3,7 +3,7 @@ const { getSettings, updateSettings } = require('../controllers/settingsControll
 const authGuard = require('../helpers/authGuard');
 const isAdmin = require('../helpers/isAdmin');
 
-router.get('/', authGuard, isAdmin, getSettings);
+router.get('/', authGuard,  getSettings);
 router.put('/', authGuard, isAdmin, updateSettings);
 
 module.exports = router;
