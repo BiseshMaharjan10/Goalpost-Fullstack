@@ -21,6 +21,18 @@ const registerUser = async(req, res) =>{
             message: `${username} already exists`
         })
     }
+
+    // Check email duplicate 
+    const userEmailExists = await RegisterUser.findOne({ where: { email } });
+    if (userEmailExists) {
+      return res.status(400).json({ message: `${email} already exists` });
+    }
+
+    // Validate email format  ← ADD HERE
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
     
     //genereate verificTION TOKEN
     const verificationToken =  crypto.randomBytes(32).toString("hex")
@@ -43,19 +55,21 @@ const registerUser = async(req, res) =>{
     });
 
     const verifyLink = `http://localhost:3000/api/user/verify-email?token=${verificationToken}`
+   if (process.env.NODE_ENV !== "test") {
     await sendEmail(
         email,
         "Verify your email",
         `
         <p>click below to verify yourself</p>
-        <a href = ${verifyLink}> click here to verify</a>
+        <a href=${verifyLink}> click here to verify</a>
         `
-    )
+    );
+}
 
 
     return res.status(201).json({
         success: true,
-        message: " register successfully",
+        message: "register successfully",
         user:{
             username: createUser.username,
             email: createUser.email
@@ -73,13 +87,44 @@ const registerUser = async(req, res) =>{
 
 const loginUser = async(req,res) =>{
     try{
+
+        if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "please fill the fields"
+      });
+    }
         const {email,password} = req.body
         const user = await RegisterUser.findOne({where:{email}})
+
+        // Check if body is empty or missing fields
+
+        if (!email || !password) {
+        return res.status(400).json({
+            success: false,
+            message: "please fill the fields"
+        });
+        }
+
+
+    // Validate email format
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid email format"
+        });
+        }
+
+        // Check if user exists
         if(!user){
             return res.status(404).json({
                 message: "User not found"
             })
         }
+        
+        // checks password
         const isvalidUser = await bcrypt.compare(password,user.password)
         if(!isvalidUser){
             return res.status(400).json({
@@ -87,6 +132,8 @@ const loginUser = async(req,res) =>{
             })
         }
 
+        
+        //generate JWT token
         const token = jwt.sign(
             {
                 id: user.id, 
