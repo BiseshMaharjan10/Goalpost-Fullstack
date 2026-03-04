@@ -19,7 +19,7 @@ app.use("/api/settings", require('./routes/settingsRoute'));
 
 app.get("/",(req,res) =>{
     res.json({message: "Welcome to the Home Page"});
-});
+}); 
 
 //start server
 const startServer = async () => {

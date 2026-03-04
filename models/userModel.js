@@ -50,7 +50,14 @@ const Register = sequelize.define(
         verificationTokenExpires:{
             type: DataTypes.DATE,
             allowNull:true
-        }
+        },
+        passwordResetToken: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        passwordResetTokenExpires: {
+            type: DataTypes.DATE,
+        },
 
     },
     {
