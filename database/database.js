@@ -1,8 +1,12 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
+const isTestEnv = process.env.NODE_ENV === "test";
+console.log(`Running in ${isTestEnv ? 'Test': 'DEVELOPMENT'}mode.`);
+
+
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
+  isTestEnv ? process.env.TEST_DB_NAME : process.env.DB_NAME,
   process.env.DB_USER,
   process.env.DB_PASS,
   {
