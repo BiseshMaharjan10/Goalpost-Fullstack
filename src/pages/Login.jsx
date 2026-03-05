@@ -165,7 +165,7 @@ const Login = () => {
                 </label>
             </div>
             <span 
-            onClick={() => navigate("/forgetpass")}
+            onClick={() => navigate("/forgot-password")}
             className="text-sm text-gray-900 font-semibold cursor-pointer hover:underline">
                 Forgot password?
             </span>
