@@ -3,9 +3,36 @@ require("dotenv").config();
 
 const BASE_URL = `http://localhost:${process.env.PORT || 3000}`;
 
+const createAndLoginUser = async () => {
+  const uniqueStamp = Date.now();
+  const email = `booking_user_${uniqueStamp}@gmail.com`;
+  const password = "securepassword123";
+
+  const registerRes = await request(BASE_URL)
+    .post("/api/user/registerUser")
+    .send({
+      username: `booking_user_${uniqueStamp}`,
+      email,
+      password,
+    });
+
+  expect(registerRes.status).toBe(201);
+
+  const loginRes = await request(BASE_URL)
+    .post("/api/user/loginUser")
+    .send({ email, password });
+
+  expect(loginRes.status).toBe(200);
+
+  return {
+    token: loginRes.body.token,
+    email,
+  };
+};
+
 describe("User Register API Tests", () => {
 
-  // 1️⃣ Successful registration
+  // Successful registration
   it("should register a new user successfully", async () => {
     const uniqueName = `testuser_${Date.now()}`;
     const uniqueEmail = `register_${Date.now()}@gmail.com`;
@@ -27,7 +54,7 @@ describe("User Register API Tests", () => {
     expect(res.body.user.email).toBe(uniqueEmail);
   });
 
-  // 2️⃣ Missing fields
+  //Missing fields
   it("should return 400 if required fields are missing", async () => {
     const res = await request(BASE_URL)
       .post("/api/user/registerUser")
@@ -37,7 +64,7 @@ describe("User Register API Tests", () => {
     expect(res.body.message).toBe("please fill the fields");
   });
 
-  // 3️⃣ Duplicate username
+  // Duplicate username
   it("should return 400 if username already exists", async () => {
     const duplicateName = `dupuser_${Date.now()}`;
     const email1 = `dup_${Date.now()}@gmail.com`;
@@ -58,7 +85,7 @@ describe("User Register API Tests", () => {
     expect(res2.body.message).toContain(`${duplicateName} already exists`);
   });
 
-  // 4️⃣ Duplicate email
+  // Duplicate email
   it("should return 400 if email already exists", async () => {
     const username1 = `user_${Date.now()}`;
     const duplicateEmail = `dupemail_${Date.now()}@gmail.com`;
@@ -79,7 +106,7 @@ describe("User Register API Tests", () => {
     expect(res2.body.message).toContain("already exists");
   });
 
-  // 5️⃣ Invalid email format (optional)
+  //  Invalid email format (optional)
   it("should return 400 if email format is invalid", async () => {
     const res = await request(BASE_URL).post("/api/user/registerUser").send({
       username: `invalid_${Date.now()}`,
@@ -92,10 +119,10 @@ describe("User Register API Tests", () => {
 });
 
 describe("Login API Edge Case Tests", () => {
-  // 1️⃣ Invalid password
+  //  Invalid password
   // Login API Edge Case Tests
 it("should return 400 for incorrect password", async () => {
-  // 1️⃣ create a valid user first
+  // create a valid user first
   const uniqueEmail = `loginuser_${Date.now()}@gmail.com`;
   const password = "correctpassword123";
 
@@ -105,7 +132,7 @@ it("should return 400 for incorrect password", async () => {
     password
   });
 
-  // 2️⃣ try to login with wrong password
+  // try to login with wrong password
   const res = await request(BASE_URL)
     .post("/api/user/loginUser")
     .send({
@@ -118,7 +145,9 @@ it("should return 400 for incorrect password", async () => {
   expect(res.body.message).toBe("Invalid email or password");
 });
 
-  // 2️⃣ Non-existent user
+
+
+  //  Non-existent user
   it("should return 404 for non-existent email", async () => {
     const res = await request(BASE_URL)
       .post("/api/user/loginUser")
@@ -132,7 +161,7 @@ it("should return 400 for incorrect password", async () => {
     expect(res.body.message).toBe("User not found");
   });
 
-  // 3️⃣ Missing fields
+  // Missing fields
   it("should return 400 if email or password is missing", async () => {
     const res = await request(BASE_URL)
       .post("/api/user/loginUser")
@@ -144,7 +173,7 @@ it("should return 400 for incorrect password", async () => {
     expect(res.status).toBe(400); // Make sure your controller returns 400 for missing fields
   });
 
-  // 4️⃣ Invalid email format
+  // Invalid email format
   it("should return 400 for invalid email format", async () => {
     const res = await request(BASE_URL)
       .post("/api/user/loginUser")
@@ -156,7 +185,7 @@ it("should return 400 for incorrect password", async () => {
     expect(res.status).toBe(400); // Ensure your controller validates email format
   });
 
-  // 5️⃣ Empty request body
+  // Empty request body
   it("should return 400 for empty request body", async () => {
     const res = await request(BASE_URL)
       .post("/api/user/loginUser")
@@ -169,52 +198,98 @@ it("should return 400 for incorrect password", async () => {
 });
 
 
+describe("Booking API Tests", () => {
+  it("should return 401 when creating booking without token", async () => {
+    const res = await request(BASE_URL).post("/api/booking").send({
+      customerName: "No Auth User",
+      email: `noauth_${Date.now()}@gmail.com`,
+      phoneNumber: "9800000000",
+      bookingDate: "2026-03-20",
+      timeSlot: "10:00 AM - 11:00 AM",
+      notes: "Unauthorized booking",
+    });
 
-// describe("Booking API Tests", () => {
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Authorization token missing");
+  });
 
-//   // 1️⃣ Get all bookings
-//   it("should fetch all bookings", async () => {
-//     const res = await request(BASE_URL).get("/api/booking/getAllBookings");
-//     expect(res.status).toBe(200);
-//     expect(res.body.success).toBe(true);
-//     expect(res.body.data).toBeDefined();
-//   });
+  it("should return 401 when fetching my bookings without token", async () => {
+    const res = await request(BASE_URL).get("/api/booking/my-bookings");
 
-//   // 2️⃣ Get pending bookings
-//   it("should fetch pending bookings", async () => {
-//     const res = await request(BASE_URL).get("/api/booking/getPendingBookings");
-//     expect(res.status).toBe(200);
-//     expect(res.body.success).toBe(true);
-//     expect(res.body.data).toBeDefined();
-//   });
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Authorization token missing");
+  });
 
-//   // 3️⃣ Create booking (user)
-//   it("should create a new booking", async () => {
-//     const res = await request(BASE_URL)
-//       .post("/api/booking/createBooking")
-//       .send({
-//         customerName: `TestUser_${Date.now()}`,
-//         email: `test_${Date.now()}@gmail.com`,
-//         bookingDate: "2026-03-05",
-//         timeSlot: "10:00"
-//       });
-//     expect(res.status).toBe(200);
-//     expect(res.body.success).toBe(true);
-//     expect(res.body.data).toBeDefined();
-//   });
+  it("should return 400 when required booking fields are missing", async () => {
+    const { token } = await createAndLoginUser();
 
-//   // 4️⃣ Update booking status (admin)
-//   it("should update booking status", async () => {
-//     const res = await request(BASE_URL)
-//       .put("/api/booking/updateBookingsStatus/1") // use an existing booking ID
-//       .send({ status: "approved" });
-//     expect([200, 404]).toContain(res.status); // 200 if exists, 404 if not
-//   });
+    const res = await request(BASE_URL)
+      .post("/api/booking")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        email: `missing_${Date.now()}@gmail.com`,
+        phoneNumber: "9800000000",
+        bookingDate: "2026-03-21",
+        timeSlot: "11:00 AM - 12:00 PM",
+      });
 
-//   // 5️⃣ Delete booking (admin)
-//   it("should delete a booking", async () => {
-//     const res = await request(BASE_URL)
-//       .delete("/api/booking/deleteBooking/1"); // use an existing booking ID
-//     expect([200, 404]).toContain(res.status);
-//   });
-// });
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toBe("Please provide all required fields");
+  });
+
+  it("should create booking successfully for authenticated user", async () => {
+    const { token, email } = await createAndLoginUser();
+    const uniqueSlot = `slot_${Date.now()}`;
+
+    const res = await request(BASE_URL)
+      .post("/api/booking")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        customerName: "Booking Success User",
+        email,
+        phoneNumber: "9800000000",
+        bookingDate: "2026-03-22",
+        timeSlot: uniqueSlot,
+        notes: "Test booking creation",
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toBe("Booking created successfully. Waiting for approval.");
+    expect(res.body.data.customerName).toBe("Booking Success User");
+    expect(res.body.data.status).toBe("pending");
+  });
+
+  it("should return 400 when booking same time slot twice", async () => {
+    const { token, email } = await createAndLoginUser();
+    const duplicateSlot = `dup_slot_${Date.now()}`;
+    const payload = {
+      customerName: "Duplicate Slot User",
+      email,
+      phoneNumber: "9800000000",
+      bookingDate: "2026-03-23",
+      timeSlot: duplicateSlot,
+      notes: "First booking",
+    };
+
+    const firstRes = await request(BASE_URL)
+      .post("/api/booking")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
+
+    expect(firstRes.status).toBe(200);
+
+    const secondRes = await request(BASE_URL)
+      .post("/api/booking")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
+
+    expect(secondRes.status).toBe(400);
+    expect(secondRes.body.success).toBe(false);
+    expect(secondRes.body.message).toBe("This time slot is already booked");
+  });
+});
+
