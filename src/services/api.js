@@ -22,9 +22,17 @@ const config ={
     }
 }
 
+
+// ============= login & registration  APIs =============
+
 export const createUserApi = (data) => ApiFormData.post("/api/user/registerUser", data);
 
 export const login = (data) => Api.post("/api/user/loginUser", data);
+
+// ============= PASSWORD RESET APIs =============
+export const forgotPassword = (data) => Api.post("/api/user/forgot-password", data);
+
+export const resetPassword = (token, data) => Api.post(`/api/user/reset-password/${token}`, data);
 
 
 export const getallUser = () => Api.get("api/user/getAllUser",config);
